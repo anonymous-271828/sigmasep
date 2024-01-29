@@ -357,7 +357,7 @@ def name_suffix(actfctn='tanh',sc=1,noise='normal',sd=1,do_targets=np.array([]),
     return s
 
 def str_to_list(s):
-    return list({int(v) for v in s[1:-1].split(';') if v is not ''})
+    return list({int(v) for v in s[1:-1].split(';') if v != ''})
 
 
 # def param_from_name(filename):
@@ -471,7 +471,7 @@ def normalranktransform(df):
     n = df.shape[0]
     d = df.shape[1]
     df = pd.DataFrame(df)
-    S = df.rank(method='first').as_matrix()/(n+1)
+    S = df.rank(method='first').values/(n+1)
     return scipy.stats.norm.ppf(S).reshape((n,d))
 
 def nrt(df):
@@ -708,26 +708,26 @@ def run_all_CIT_and_save(filepath,n=10000,actfct=np.tanh,sc=1,noise='normal',sd=
     if do_strategy == 0: # all interventions with target size <= max_do
         do_list = [t for t in powerlist(range(d)) if len(t) <= max_do]
     elif do_strategy == 1: # random max_do-node interventions, drawn with replacement
-	do_list =[[]]
-	for ll in range(nbr_do):
-	    do_list +=[random.sample(range(d), max_do)]
+        do_list =[[]]
+        for ll in range(nbr_do):
+            do_list +=[random.sample(range(d), max_do)]
     elif do_strategy == 2: # random single-node interventions, drawn without replacement
         do_list = [[]] + [[t] for t in random.sample(range(d), nbr_do)]
-    for do_targets in do_list:
-        do_t = np.array(do_targets)
-        S = sample_from_mSCM(W,b,do_t,n,d,actfct,sc,sd,noise)
-        S = normalranktransform(S)
-        for id_x, id_y, id_z in partitions:
-            one_row = pd.DataFrame()
-            #one_row.loc[0,'n'] = int(n)
-            one_row.loc[0,'X'] = '['+';'.join([str(s) for s in id_x])+']'
-            one_row.loc[0,'Y'] = '['+';'.join([str(s) for s in id_y])+']'
-            one_row.loc[0,'do_targets'] = '['+';'.join([str(s) for s in do_targets])+']'
-            one_row.loc[0,'Z'] = '['+';'.join([str(s) for s in id_z])+']'
-            one_row.loc[0,'p-val'] = pcor_p(S, id_x, id_y, id_z)
-            with open((filepath+tests_filename), 'a') as f:
-                one_row.to_csv(f, header=header,index=False)
-            header = False
+        for do_targets in do_list:
+            do_t = np.array(do_targets)
+            S = sample_from_mSCM(W,b,do_t,n,d,actfct,sc,sd,noise)
+            S = normalranktransform(S)
+            for id_x, id_y, id_z in partitions:
+                one_row = pd.DataFrame()
+                #one_row.loc[0,'n'] = int(n)
+                one_row.loc[0,'X'] = '['+';'.join([str(s) for s in id_x])+']'
+                one_row.loc[0,'Y'] = '['+';'.join([str(s) for s in id_y])+']'
+                one_row.loc[0,'do_targets'] = '['+';'.join([str(s) for s in do_targets])+']'
+                one_row.loc[0,'Z'] = '['+';'.join([str(s) for s in id_z])+']'
+                one_row.loc[0,'p-val'] = pcor_p(S, id_x, id_y, id_z)
+                with open((filepath+tests_filename), 'a') as f:
+                    one_row.to_csv(f, header=header,index=False)
+                header = False
     print('Saved test results to : ',filepath+tests_filename)
     return tests_filename
 
